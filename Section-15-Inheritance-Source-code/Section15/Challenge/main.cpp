@@ -2,8 +2,10 @@
 // Challenge 
 #include <iostream>
 #include <vector>
-#include "Savings_Account.h"
+#include "SavingsAccount.h"
 #include "Account_Util.h"
+
+#include <ctime>
 
 using namespace std;
 
@@ -24,16 +26,38 @@ int main() {
     
     // Savings 
 
-    vector<Savings_Account> sav_accounts;
-    sav_accounts.push_back(Savings_Account {} );
-    sav_accounts.push_back(Savings_Account {"Superman"} );
-    sav_accounts.push_back(Savings_Account {"Batman", 2000} );
-    sav_accounts.push_back(Savings_Account {"Wonderwoman", 5000, 5.0} );
+    vector<SavingsAccount> sav_accounts;
+    sav_accounts.push_back(SavingsAccount {} );
+    sav_accounts.push_back(SavingsAccount {"Superman"} );
+    sav_accounts.push_back(SavingsAccount {"Batman", 2000} );
+    sav_accounts.push_back(SavingsAccount {"Wonderwoman", 5000, 5.0} );
 
     display(sav_accounts);
     deposit(sav_accounts, 1000);
     withdraw(sav_accounts, 2000);
-    
+
+    // Checking Accounts
+    vector<CheckingAccount> check_accounts;
+    check_accounts.push_back(CheckingAccount {});
+    check_accounts.push_back(CheckingAccount {"Larry1"});
+    check_accounts.push_back(CheckingAccount {"Moe1", 2000} );
+    check_accounts.push_back(CheckingAccount {"Curly1", 5000} );
+
+    display(check_accounts);
+    deposit(check_accounts, 1000);
+    withdraw(check_accounts,2000);
+
+    // Trust Accounts
+    vector<TrustAccount> trust_accounts;
+    trust_accounts.push_back(TrustAccount {});
+    trust_accounts.push_back(TrustAccount {"Superman1"} );
+    trust_accounts.push_back(TrustAccount {"Batman1", 2000} );
+    trust_accounts.push_back(TrustAccount {"Wonderwoman1", 5000, 5.0} );
+
+    display(trust_accounts);
+    deposit(trust_accounts, 1000);
+    withdraw(trust_accounts,2000);
+    withdraw(trust_accounts,1000);
 
     return 0;
 }
