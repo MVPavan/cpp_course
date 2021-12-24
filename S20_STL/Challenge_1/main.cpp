@@ -12,7 +12,23 @@ bool is_palindrome(const std::string& s)
 {
     // You must implement this function.
     // Since we are learning the STL - use a deque to solve the problem.
-    return false;
+    std::deque<char> pal;
+    for(const auto &c:s){
+        if(std::isalpha(c))
+            pal.push_back(std::toupper(c));
+    }
+    bool palindrome = true;
+    while(pal.size()>1){
+        if (pal.front() == pal.back()){
+            pal.pop_back();
+            pal.pop_front();
+        }
+        else{
+            palindrome = false;
+            break;
+        }
+    }
+    return palindrome;
 }
 
 int main()

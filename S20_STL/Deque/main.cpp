@@ -50,9 +50,11 @@ void test2() {
     std::cout << "Back : " << d.back() << std::endl;
     std::cout << "Size  : " << d.size() << std::endl;
     
+    int a =0 ,b = 0;
     d.pop_back();
     d.pop_front();
     display(d);
+    std::cout << "here: " <<a<< " , "<<b;
 }
 
 void test3() {
@@ -81,7 +83,7 @@ void test4() {
     
     for (const auto &elem: vec) {
         d.push_front(elem);
-    }    
+    }
     display(d);
     
     d.clear();

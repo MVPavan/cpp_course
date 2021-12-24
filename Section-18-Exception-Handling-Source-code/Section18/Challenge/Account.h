@@ -5,6 +5,7 @@
 #include <string>
 #include "I_Printable.h"
 #include "IllegalBalanceException.h"
+#include "InsufficientFundsException.h"
 
 class Account : public I_Printable {
 private:   
