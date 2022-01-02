@@ -68,21 +68,22 @@ vector<int> LinuxParser::Pids() {
 // Done: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() {
     string line, key, value;
-    float mem_total=0.0, mem_free=0.0;
+    float mem_total=0.0, mem_free=0.0, cached_mem=0.0;
     std::ifstream filestream(kProcDirectory + kMeminfoFilename);
     if (filestream.is_open()) {
         while (std::getline(filestream, line)) {
             std::replace(line.begin(), line.end(), ':', ' ');
             std::istringstream linestream(line);
             while (linestream >> key >> value) {
-                if (key == "MemTotal") {
-                    mem_total = stof(value);
+                if (key == "MemTotal") {mem_total = stof(value);}
+                else if (key == "MemFree") {mem_free = stof(value);}
+                else if (key == "Buffers"){cached_mem += stof(value);}
+                else if (key == "Cached"){cached_mem += stof(value);}
+                else if (key == "Shmem"){cached_mem -= stof(value);}
+                else if (key == "SReclaimable") {
+                    cached_mem += stof(value);
+                    return (mem_total - mem_free - cached_mem) / mem_total;
                 }
-                else if (key == "MemFree") {
-                    mem_free = stof(value);
-                }
-                if(mem_free>0 && mem_total>0)
-                    return mem_total-mem_free;
             }
         }
     }

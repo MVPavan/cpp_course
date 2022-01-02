@@ -44,8 +44,7 @@ float Processor::Utilization() {
     cpu = LinuxParser::CpuUtilization();
     cpu_times_old = loadCPUUtilization(cpu);
     // sleep for delta calculation
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     cpu = LinuxParser::CpuUtilization();
     cpu_times_new = loadCPUUtilization(cpu);
     return deltaUtilization(cpu_times_old, cpu_times_new);
