@@ -188,7 +188,7 @@ string LinuxParser::Ram(int pid) {
             std::istringstream linestream(line);
             linestream >> key >> value;
             if (key == "VmSize") {
-                return to_string(stof(value)/1000);
+                return to_string(int(stof(value)/1000));
             }
         }
     }
