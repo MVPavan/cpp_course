@@ -32,35 +32,37 @@ string LinuxParser::OperatingSystem() {
 
 // DONE: An example of how to read data from the filesystem
 string LinuxParser::Kernel() {
-  string os, version, kernel;
-  string line;
-  std::ifstream stream(kProcDirectory + kVersionFilename);
-  if (stream.is_open()) {
-    std::getline(stream, line);
-    std::istringstream linestream(line);
-    linestream >> os >> version >> kernel;
-  }
-  return kernel;
+    string os, version, kernel;
+    string line;
+    std::ifstream stream(kProcDirectory + kVersionFilename);
+    if (stream.is_open()) {
+        std::getline(stream, line);
+        std::istringstream linestream(line);
+        linestream >> os >> version >> kernel;
+    }
+    return kernel;
 }
 
 // BONUS: Update this to use std::filesystem
 vector<int> LinuxParser::Pids() {
-  vector<int> pids;
-  DIR* directory = opendir(kProcDirectory.c_str());
-  struct dirent* file;
-  while ((file = readdir(directory)) != nullptr) {
-    // Is this a directory?
-    if (file->d_type == DT_DIR) {
-      // Is every character of the name a digit?
-      string filename(file->d_name);
-      if (all_of(filename.begin(), filename.end(), predicate)) {
-        int pid = stoi(filename);
-        pids.push_back(pid);
-      }
+    vector<int> pids;
+    DIR* directory = opendir(kProcDirectory.c_str());
+    struct dirent* file;
+    int (*predicate)(int) = std::isdigit;
+    while ((file = readdir(directory)) != nullptr) {
+        // Is this a directory?
+        if (file->d_type == DT_DIR) {
+          // Is every character of the name a digit?
+          string filename(file->d_name);
+
+          if (all_of(filename.begin(), filename.end(), predicate)) {
+            int pid = stoi(filename);
+            pids.push_back(pid);
+          }
+        }
     }
-  }
-  closedir(directory);
-  return pids;
+    closedir(directory);
+    return pids;
 }
 
 // Done: Read and return the system memory utilization
@@ -194,7 +196,7 @@ string LinuxParser::Ram(int pid) {
 }
 
 // Done: Read and return the user ID associated with a process
-string LinuxParser::Uid(int pid[[maybe_unused]]) {
+string LinuxParser::Uid(int pid) {
     string line, key, value;
     std::ifstream filestream(kProcDirectory + to_string(pid) +  kStatusFilename);
     if (filestream.is_open()) {
@@ -212,14 +214,14 @@ string LinuxParser::Uid(int pid[[maybe_unused]]) {
 
 // Done: Read and return the user associated with a process
 string LinuxParser::User(int pid) {
-    string line, key, tmp, value;
+    string line, key, tmp, value, uid_ = Uid(pid);
     std::ifstream filestream(kPasswordPath);
     if (filestream.is_open()) {
         while (std::getline(filestream, line)) {
             std::replace(line.begin(), line.end(), ':', ' ');
             std::istringstream linestream(line);
             linestream >> key >>tmp>> value;
-            if (value == "1000") {
+            if (value == uid_) {
                 return key;
             }
         }
@@ -240,4 +242,21 @@ long LinuxParser::UpTime(int pid) {
         return LinuxParser::UpTime() - (stol(value)/ sysconf(_SC_CLK_TCK));
     }
     return 0;
+}
+
+float LinuxParser::CpuUtilization(int pid) {
+    string word;
+    float cpu_time{0};
+    std::ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
+    int counter = 1;
+    while (filestream.is_open()) {
+        filestream >> word;
+        if (counter == 14 || counter == 15 || counter == 16 || counter == 17){
+            cpu_time += stof(word);
+            if(counter==17)
+                return cpu_time/float(sysconf(_SC_CLK_TCK));
+        }
+        counter++;
+    }
+    return cpu_time;
 }

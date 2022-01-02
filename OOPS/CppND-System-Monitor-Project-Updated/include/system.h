@@ -4,21 +4,22 @@
 #include <string>
 #include <vector>
 
+#include "linux_parser.h"
 #include "process.h"
 #include "processor.h"
 
 class System {
  public:
-  Processor& Cpu();                   // TODO: See src/system.cpp
-  std::vector<Process>& Processes();  // TODO: See src/system.cpp
-  float MemoryUtilization();          // TODO: See src/system.cpp
-  long UpTime();                      // TODO: See src/system.cpp
-  int TotalProcesses();               // TODO: See src/system.cpp
-  int RunningProcesses();             // TODO: See src/system.cpp
-  std::string Kernel();               // TODO: See src/system.cpp
-  std::string OperatingSystem();      // TODO: See src/system.cpp
+  Processor& Cpu();                   // Done: See src/system.cpp
+  std::vector<Process>& Processes();  // Done: See src/system.cpp
+  static float MemoryUtilization();          // Done: See src/system.cpp
+  static long UpTime();                      // Done: See src/system.cpp
+  static int TotalProcesses();               // Done: See src/system.cpp
+  static int RunningProcesses();             // Done: See src/system.cpp
+  static std::string Kernel();               // Done: See src/system.cpp
+  static std::string OperatingSystem();      // Done: See src/system.cpp
 
-  // TODO: Define any necessary private members
+  // Done: Define any necessary private members
  private:
   Processor cpu_ = {};
   std::vector<Process> processes_ = {};
