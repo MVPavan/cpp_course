@@ -10,8 +10,8 @@
 
 class System {
  public:
-  Processor& Cpu();                   // Done: See src/system.cpp
-  std::vector<Process>& Processes();  // Done: See src/system.cpp
+  virtual Processor& Cpu();                   // Done: See src/system.cpp
+  virtual std::vector<Process>& Processes();  // Done: See src/system.cpp
   static float MemoryUtilization();          // Done: See src/system.cpp
   static long UpTime();                      // Done: See src/system.cpp
   static int TotalProcesses();               // Done: See src/system.cpp

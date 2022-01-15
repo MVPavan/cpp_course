@@ -10,7 +10,7 @@ using vulli = std::vector<ulli>;
 
 class Processor {
  public:
-  float Utilization();  // Done: See src/processor.cpp
+  virtual float Utilization();  // Done: See src/processor.cpp
   // Done: Declare any necessary private members
  private:
     vulli cpu_times_old{},cpu_times_new{};
