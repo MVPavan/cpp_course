@@ -9,10 +9,7 @@
 #include "processor.h"
 #include "system.h"
 
-using std::set;
-using std::size_t;
-using std::string;
-using std::vector;
+using namespace std;
 
 // Done: Return the system's CPU
 Processor& System::Cpu() {
@@ -24,7 +21,7 @@ Processor& System::Cpu() {
 vector<Process>& System::Processes() {
     processes_.clear();
     for(int pid: LinuxParser::Pids()){
-        processes_.emplace_back(Process(pid));
+        processes_.emplace_back(pid);
     }
     std::sort(processes_.rbegin(), processes_.rend());
     return processes_;
