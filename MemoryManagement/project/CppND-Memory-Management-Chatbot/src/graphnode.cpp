@@ -12,7 +12,7 @@ GraphNode::~GraphNode()
     ////
 
 //    delete _chatBot;
-    _chatBot = nullptr;
+//    _chatBot = nullptr;
     ////
     //// EOF STUDENT CODE
 }
@@ -34,17 +34,26 @@ void GraphNode::AddEdgeToChildNode(GraphEdge *edge)
 
 //// STUDENT CODE
 ////
-void GraphNode::MoveChatbotHere(ChatBot *chatbot)
+//void GraphNode::MoveChatbotHere(ChatBot *chatbot)
+//{
+//_chatBot = chatbot;
+//_chatBot->SetCurrentNode(this);
+//chatbot = nullptr;
+//}
+
+void GraphNode::MoveChatbotHere(ChatBot chatbot)
 {
-    _chatBot = chatbot;
-    _chatBot->SetCurrentNode(this);
-    chatbot = nullptr;
+    _chatBot = std::move(chatbot);
+    _chatBot.SetCurrentNode(this);
+//    chatbot = nullptr;
 }
 
 void GraphNode::MoveChatbotToNewNode(GraphNode *newNode)
 {
-    newNode->MoveChatbotHere(_chatBot);
-    _chatBot = nullptr; // invalidate pointer at source
+//    newNode->MoveChatbotHere(_chatBot);
+    newNode->MoveChatbotHere(std::move(_chatBot));
+
+//    _chatBot = nullptr; // invalidate pointer at source
 }
 ////
 //// EOF STUDENT CODE
