@@ -2,6 +2,8 @@
 #define CHATGUI_H_
 
 #include <wx/wx.h>
+#include <memory>
+
 
 class ChatLogic; // forward declaration
 
@@ -15,8 +17,8 @@ private:
 
     //// STUDENT CODE
     ////
-
-    ChatLogic *_chatLogic;
+    std::unique_ptr<ChatLogic> _chatLogic;
+//    ChatLogic *_chatLogic;
 
     ////
     //// EOF STUDENT CODE
@@ -24,10 +26,10 @@ private:
 public:
     // constructor / destructor
     ChatBotPanelDialog(wxWindow *parent, wxWindowID id);
-    ~ChatBotPanelDialog();
+    ~ChatBotPanelDialog() override;
 
     // getter / setter
-    ChatLogic *GetChatLogicHandle() { return _chatLogic; }
+    ChatLogic *GetChatLogicHandle() { return _chatLogic.get(); }
 
     // events
     void paintEvent(wxPaintEvent &evt);
@@ -35,7 +37,7 @@ public:
     void render(wxDC &dc);
 
     // proprietary functions
-    void AddDialogItem(wxString text, bool isFromUser = true);
+    void AddDialogItem(const wxString& text, bool isFromUser = true);
     void PrintChatbotResponse(std::string response);
 
     DECLARE_EVENT_TABLE()
@@ -67,7 +69,7 @@ private:
 
 public:
     // constructor / desctructor
-    ChatBotFrame(const wxString &title);
+    explicit ChatBotFrame(const wxString &title);
 };
 
 // control panel for background image display
@@ -78,7 +80,7 @@ class ChatBotFrameImagePanel : public wxPanel
 
 public:
     // constructor / desctructor
-    ChatBotFrameImagePanel(wxFrame *parent);
+    explicit ChatBotFrameImagePanel(wxFrame *parent);
 
     // events
     void paintEvent(wxPaintEvent &evt);
@@ -93,7 +95,7 @@ class ChatBotApp : public wxApp
 {
 public:
     // events
-    virtual bool OnInit();
+    bool OnInit() override;
 };
 
 #endif /* CHATGUI_H_ */

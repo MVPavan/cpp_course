@@ -30,6 +30,7 @@ ChatBot::ChatBot(std::string filename)
     _image = new wxBitmap(filename, wxBITMAP_TYPE_PNG);
 }
 
+
 ChatBot::~ChatBot()
 {
     std::cout << "ChatBot Destructor" << std::endl;
@@ -44,6 +45,58 @@ ChatBot::~ChatBot()
 
 //// STUDENT CODE
 ////
+
+
+ChatBot::ChatBot(const ChatBot &source) {
+    _currentNode = source._currentNode;
+    _rootNode = source._rootNode;
+    _chatLogic = source._chatLogic;
+
+    _image = new wxBitmap();
+    *_image = *source._image;
+}
+
+ChatBot &ChatBot::operator=(const ChatBot &source) {
+    if(&source == this){return *this;}
+
+    _currentNode = source._currentNode;
+    _rootNode = source._rootNode;
+    _chatLogic = source._chatLogic;
+    delete _image;
+    _image = nullptr;
+    _image = new wxBitmap();
+    *_image = *source._image;
+    return *this;
+}
+
+ChatBot::ChatBot(ChatBot &&source)  noexcept {
+    _currentNode = source._currentNode;
+    _rootNode = source._rootNode;
+    _chatLogic = source._chatLogic;
+
+    _image = new wxBitmap();
+    *_image = *source._image;
+
+    delete source._image;
+    source._image = nullptr;
+
+}
+
+ChatBot &ChatBot::operator=(ChatBot &&source) noexcept{
+    if(&source == this){return *this;}
+
+    _currentNode = source._currentNode;
+    _rootNode = source._rootNode;
+    _chatLogic = source._chatLogic;
+    delete _image;
+    _image = nullptr;
+    _image = new wxBitmap();
+    *_image = *source._image;
+
+    delete source._image;
+    source._image = nullptr;
+    return *this;
+}
 
 ////
 //// EOF STUDENT CODE
@@ -146,3 +199,6 @@ int ChatBot::ComputeLevenshteinDistance(std::string s1, std::string s2)
 
     return result;
 }
+
+
+

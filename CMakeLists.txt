@@ -3,8 +3,11 @@ project(Udacity)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_library(LibsModule Concurrency/practice.cpp)
+target_link_libraries(LibsModule -lpthread)
 add_executable(
         Udacity
-        MemoryManagement/exercise_3/mv_exercise_3.cpp
+        Concurrency/practice.cpp
 #        main.cpp
 )
+target_link_libraries(Udacity LibsModule)
