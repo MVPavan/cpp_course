@@ -12,7 +12,7 @@ GraphNode::~GraphNode()
     ////
 
 //    delete _chatBot;
-
+    _chatBot = nullptr;
     ////
     //// EOF STUDENT CODE
 }
@@ -29,7 +29,7 @@ void GraphNode::AddEdgeToParentNode(GraphEdge *edge)
 
 void GraphNode::AddEdgeToChildNode(GraphEdge *edge)
 {
-    _childEdges.push_back(edge);
+    _childEdges.push_back(std::unique_ptr<GraphEdge>(edge));
 }
 
 //// STUDENT CODE
@@ -38,6 +38,7 @@ void GraphNode::MoveChatbotHere(ChatBot *chatbot)
 {
     _chatBot = chatbot;
     _chatBot->SetCurrentNode(this);
+    chatbot = nullptr;
 }
 
 void GraphNode::MoveChatbotToNewNode(GraphNode *newNode)
@@ -53,7 +54,7 @@ GraphEdge *GraphNode::GetChildEdgeAtIndex(int index)
     //// STUDENT CODE
     ////
 
-    return _childEdges[index];
+    return _childEdges[index].get();
 
     ////
     //// EOF STUDENT CODE
