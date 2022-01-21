@@ -37,5 +37,6 @@
 *.project
 **/.codelite
 **/cmake-build-debug
+**/build
 /build/CMakeFiles/cmake.check_cache
 /build/CMakeCache.txt
