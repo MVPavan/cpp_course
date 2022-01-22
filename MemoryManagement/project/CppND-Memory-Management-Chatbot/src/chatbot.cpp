@@ -84,10 +84,8 @@ ChatBot::ChatBot(ChatBot &&source)  noexcept {
     _rootNode = source._rootNode;
     _chatLogic = source._chatLogic;
 
-    _image = new wxBitmap();
-    *_image = *source._image;
+    _image = source._image;
 
-    delete source._image;
     source._image = nullptr;
     _chatLogic->SetChatbotHandle(this);
 
@@ -101,12 +99,8 @@ ChatBot &ChatBot::operator=(ChatBot &&source) noexcept{
     _currentNode = source._currentNode;
     _rootNode = source._rootNode;
     _chatLogic = source._chatLogic;
-    delete _image;
-    _image = nullptr;
-    _image = new wxBitmap();
-    *_image = *source._image;
+    _image = source._image;
 
-    delete source._image;
     source._image = nullptr;
     _chatLogic->SetChatbotHandle(this);
     return *this;
