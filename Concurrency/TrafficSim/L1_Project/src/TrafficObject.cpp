@@ -11,7 +11,7 @@ void TrafficObject::setPosition(double x, double y)
     _posY = y;
 }
 
-void TrafficObject::getPosition(double &x, double &y)
+void TrafficObject::getPosition(double &x, double &y) const
 {
     x = _posX;
     y = _posY;
@@ -26,4 +26,7 @@ TrafficObject::TrafficObject()
 TrafficObject::~TrafficObject()
 {
     // Task L1.1 : Set up a thread barrier that ensures that all the thread objects in the member vector _threads are joined.
+    for(auto& _thread: _threads){
+        _thread.join();
+    }
 }

@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<Street>> Intersection::queryStreets(std::shared_ptr<
 {
     // store all outgoing streets in a vector ...
     std::vector<std::shared_ptr<Street>> outgoings;
-    for (auto it : _streets)
+    for (const auto& it : _streets)
     {
         if (incoming->getID() != it->getID()) // ... except the street making the inquiry
         {

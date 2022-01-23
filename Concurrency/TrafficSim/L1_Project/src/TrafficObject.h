@@ -22,7 +22,7 @@ public:
     // getter and setter
     int getID() const { return _id; }
     void setPosition(double x, double y);
-    void getPosition(double &x, double &y);
+    void getPosition(double &x, double &y) const;
     ObjectType getType() { return _type; }
 
     // typical behaviour methods
@@ -31,7 +31,7 @@ public:
 protected:
     ObjectType _type;                 // identifies the class type
     int _id;                          // every traffic object has its own unique id
-    double _posX, _posY;              // vehicle position in pixels
+    double _posX{}, _posY{};              // vehicle position in pixels
     std::vector<std::thread> _threads; // holds all threads that have been launched within this object
 
 private:
