@@ -25,7 +25,7 @@ public:
 
 private:
     // typical behaviour methods
-    void drive();
+    [[noreturn]] void drive();
 
     std::shared_ptr<Street> _currStreet;            // street on which the vehicle is currently on
     std::shared_ptr<Intersection> _currDestination; // destination to which the vehicle is currently driving

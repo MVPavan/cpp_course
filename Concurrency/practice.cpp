@@ -1,66 +1,279 @@
 #include <iostream>
 #include <thread>
+#include <vector>
 #include <future>
+#include <algorithm>
+#include <mutex>
 
-class Vehicle
+
+double result;
+std::mutex mutex_flag;
+
+void printResult(int denom)
 {
-public:
-    //default constructor
-    Vehicle() : _id(0), _name(new std::string("Default Name"))
-    {
-        std::cout << "Vehicle #" << _id << " Default constructor called" << std::endl;
-    }
+    mutex_flag.lock();
+    std::cout << "for denom = " << denom << ", the result is " << result << std::endl;
+    mutex_flag.unlock();
 
-    //initializing constructor
-    Vehicle(int id, std::string name) : _id(id), _name(new std::string(name))
-    {
-        std::cout << "Vehicle #" << _id << " Initializing constructor called" << std::endl;
-    }
+}
 
-    // copy constructor
-    Vehicle(Vehicle const &src)
+void divideByNumber(double num, double denom)
+{
+    mutex_flag.lock();
+
+    try
     {
-        // QUIZ: Student code STARTS here
-        _id = src._id;
-        if (src._name != nullptr)
+        // divide num by denom but throw an exception if division by zero is attempted
+        if (denom != 0)
         {
-            _name = new std::string;
-            *_name = *src._name;
+            result = num / denom;
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            printResult(denom);
+
         }
-        // QUIZ: Student code ENDS here
-        std::cout << "Vehicle #" << _id << " copy constructor called" << std::endl;
-    };
+        else
+        {
+            throw std::invalid_argument("Exception from thread: Division by zero!");
+        }
+    }
+    catch (const std::invalid_argument &e)
+    {
+        // notify the user about the exception and return
+        std::cout << e.what() << std::endl;
+        return;
+    }
+    mutex_flag.unlock();
 
-    // setter and getter
-    void setID(int id) { _id = id; }
-    int getID() { return _id; }
-    void setName(std::string name) { *_name = name; }
-    std::string getName() { return *_name; }
-
-private:
-    int _id;
-    std::string *_name;
-};
+}
 
 int main()
 {
-    // create instances of class Vehicle
-    Vehicle v0;    // default constructor
-    Vehicle v1(1, "Vehicle 1"); // initializing constructor
+    // create a number of threads which execute the function "divideByNumber" with varying parameters
+    std::vector<std::future<void>> futures;
+    for (double i = -5; i <= +5; ++i)
+    {
+        futures.emplace_back(std::async(std::launch::async, divideByNumber, 50.0, i));
+    }
 
-    // launch a thread that modifies the Vehicle name
-    std::future<void> ftr = std::async([](Vehicle v) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // simulate work
-        v.setName("Vehicle 2");
-    },v0);
-
-    v0.setName("Vehicle 3");
-
-    ftr.wait();
-    std::cout << v0.getName() << std::endl;
+    // wait for the results
+    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+        ftr.wait();
+    });
 
     return 0;
 }
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <mutex>
+//#include<algorithm>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//    int getID() { return _id; }
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() {}
+//
+//    // getters / setters
+//    void printSize()
+//    {
+//        _mutex.lock();
+//        std::cout << "#vehicles = " << _vehicles.size() << std::endl;
+//        _mutex.unlock();
+//    }
+//
+//    // typical behaviour methods
+//    void pushBack(Vehicle &&v)
+//    {
+//        for (size_t i = 0; i < 3; ++i)
+//        {
+//            if (_mutex.try_lock_for(std::chrono::milliseconds(100)))
+//            {
+//                _vehicles.emplace_back(std::move(v));
+//                //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//                _mutex.unlock();
+//                break;
+//            }
+//            else
+//            {
+//                std::cout << "Error! Vehicle #" << v.getID() << " could not be added to the vector" << std::endl;
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            }
+//        }
+//    }
+//
+//private:
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//    std::timed_mutex _mutex;
+//};
+//
+//int main()
+//{
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 1000; ++i)
+//    {
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, std::move(v)));
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    queue->printSize();
+//
+//    return 0;
+//}
+
+
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include<algorithm>
+//#include <mutex>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() : _tmpVehicles(0) {}
+//
+//    // getters / setters
+//    void printSize()
+//    {
+//        _mutex.lock();
+//        std::cout << "#vehicles = " << _tmpVehicles << std::endl;
+//        _mutex.unlock();
+//    }
+//
+//    // typical behaviour methods
+//    void pushBack(Vehicle &&v)
+//    {
+//        _mutex.lock();
+////        _vehicles.push_back(v); // data race would cause an exception
+//        _vehicles.emplace_back(v);
+//        int oldNum = _tmpVehicles;
+//        std::this_thread::sleep_for(std::chrono::microseconds(1)); // wait deliberately to expose the data race
+//        _tmpVehicles = oldNum + 1;
+//        _mutex.unlock();
+//    }
+//
+//private:
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//    int _tmpVehicles;
+//    std::mutex _mutex;
+//};
+//
+//int main()
+//{
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 1000; ++i)
+//    {
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, v));
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    queue->printSize();
+//
+//    return 0;
+//}
+
+
+
+
+
+
+//#include <iostream>
+//#include <thread>
+//#include <future>
+//
+//class Vehicle
+//{
+//public:
+//    //default constructor
+//    Vehicle() : _id(0), _name(new std::string("Default Name"))
+//    {
+//        std::cout << "Vehicle #" << _id << " Default constructor called" << std::endl;
+//    }
+//
+//    //initializing constructor
+//    Vehicle(int id, std::string name) : _id(id), _name(new std::string(name))
+//    {
+//        std::cout << "Vehicle #" << _id << " Initializing constructor called" << std::endl;
+//    }
+//
+//    // copy constructor
+//    Vehicle(Vehicle const &src)
+//    {
+//        // QUIZ: Student code STARTS here
+//        _id = src._id;
+//        if (src._name != nullptr)
+//        {
+//            _name = new std::string;
+//            *_name = *src._name;
+//        }
+//        // QUIZ: Student code ENDS here
+//        std::cout << "Vehicle #" << _id << " copy constructor called" << std::endl;
+//    };
+//
+//    // setter and getter
+//    void setID(int id) { _id = id; }
+//    int getID() { return _id; }
+//    void setName(std::string name) { *_name = name; }
+//    std::string getName() { return *_name; }
+//
+//private:
+//    int _id;
+//    std::string *_name;
+//};
+//
+//int main()
+//{
+//    // create instances of class Vehicle
+//    Vehicle v0;    // default constructor
+//    Vehicle v1(1, "Vehicle 1"); // initializing constructor
+//
+//    // launch a thread that modifies the Vehicle name
+//    std::future<void> ftr = std::async([](Vehicle v) {
+//        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // simulate work
+//        v.setName("Vehicle 2");
+//    },v0);
+//
+//    v0.setName("Vehicle 3");
+//
+//    ftr.wait();
+//    std::cout << v0.getName() << std::endl;
+//
+//    return 0;
+//}
 //#include <iostream>
 //#include <thread>
 //#include <future>

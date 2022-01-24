@@ -16,7 +16,7 @@ public:
     void setTrafficObjects(std::vector<std::shared_ptr<TrafficObject>> &trafficObjects) { _trafficObjects = trafficObjects; };
 
     // typical behaviour methods
-    [[noreturn]] void simulate();
+    [[noreturn]] [[noreturn]] void simulate();
 
 private:
     // typical behaviour methods

@@ -5,7 +5,7 @@
 #include "Graphics.h"
 #include "Intersection.h"
 
-void Graphics::simulate()
+[[noreturn]] void Graphics::simulate()
 {
     this->loadBackgroundImg();
     while (true)
@@ -23,6 +23,7 @@ void Graphics::loadBackgroundImg()
     // create window
     _windowName = "Concurrency Traffic Simulation";
     cv::namedWindow(_windowName, cv::WINDOW_NORMAL);
+    cv::resizeWindow(_windowName, 1920,1920);
 
     // load image and create copy to be used for semi-transparent overlay
     cv::Mat background = cv::imread(_bgFilename);
