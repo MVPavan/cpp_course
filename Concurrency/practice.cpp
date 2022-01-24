@@ -1,38 +1,187 @@
 #include <iostream>
 #include <thread>
-#include <vector>
+#include <future>
 
-void printHello()
+class Vehicle
 {
-    // perform work
-    std::cout << "Hello from Worker thread #" << std::this_thread::get_id() << std::endl;
-}
+public:
+    //default constructor
+    Vehicle() : _id(0), _name(new std::string("Default Name"))
+    {
+        std::cout << "Vehicle #" << _id << " Default constructor called" << std::endl;
+    }
+
+    //initializing constructor
+    Vehicle(int id, std::string name) : _id(id), _name(new std::string(name))
+    {
+        std::cout << "Vehicle #" << _id << " Initializing constructor called" << std::endl;
+    }
+
+    // copy constructor
+    Vehicle(Vehicle const &src)
+    {
+        // QUIZ: Student code STARTS here
+        _id = src._id;
+        if (src._name != nullptr)
+        {
+            _name = new std::string;
+            *_name = *src._name;
+        }
+        // QUIZ: Student code ENDS here
+        std::cout << "Vehicle #" << _id << " copy constructor called" << std::endl;
+    };
+
+    // setter and getter
+    void setID(int id) { _id = id; }
+    int getID() { return _id; }
+    void setName(std::string name) { *_name = name; }
+    std::string getName() { return *_name; }
+
+private:
+    int _id;
+    std::string *_name;
+};
 
 int main()
 {
-    // create threads
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < 5; ++i)
-    {
-        // copying thread objects causes a compile error
-        /*
-        std::thread t(printHello);
-        threads.push_back(t);
-        */
+    // create instances of class Vehicle
+    Vehicle v0;    // default constructor
+    Vehicle v1(1, "Vehicle 1"); // initializing constructor
 
-        // moving thread objects will work
-        threads.emplace_back(std::thread(printHello));
-    }
+    // launch a thread that modifies the Vehicle name
+    std::future<void> ftr = std::async([](Vehicle v) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // simulate work
+        v.setName("Vehicle 2");
+    },v0);
 
-    // do something in main()
-    std::cout << "Hello from Main thread #" << std::this_thread::get_id() << std::endl;
+    v0.setName("Vehicle 3");
 
-    // call join on all thread objects using a range-based loop
-    for (auto &t : threads)
-        t.join();
+    ftr.wait();
+    std::cout << v0.getName() << std::endl;
 
     return 0;
 }
+//#include <iostream>
+//#include <thread>
+//#include <future>
+//#include <cmath>
+//#include <vector>
+//#include <chrono>
+//
+//void workerFunction(int n)
+//{
+//    // print system id of worker thread
+//    std::cout << "Worker thread id = " << std::this_thread::get_id() << std::endl;
+//
+//    // perform work
+//    for (int i = 0; i < n; ++i)
+//    {
+//        sqrt(12345.6789);
+//    }
+//}
+//
+//int main()
+//{
+//    // print system id of worker thread
+//    std::cout << "Main thread id = " << std::this_thread::get_id() << std::endl;
+//
+//    // start time measurement
+//    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+//
+//    // launch various tasks
+//    std::vector<std::future<void>> futures;
+//    int nLoops = 1e7, nThreads = 5;
+//    futures.reserve(nThreads);
+//    for (int i = 0; i < nThreads; ++i)
+//    {
+//        futures.emplace_back(std::async( std::launch::deferred, workerFunction, nLoops));
+//    }
+//
+//    // wait for tasks to complete
+//    for (const std::future<void> &ftr : futures)
+//        ftr.wait();
+//
+//    // stop time measurement and print execution time
+//    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+//    auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+//    std::cout << "Execution finished after " << duration <<" microseconds" << std::endl;
+//
+//    return 0;
+//}
+
+//
+//#include <iostream>
+//#include <thread>
+//#include <future>
+//
+//void modifyMessage(std::promise<std::string> && prms, std::string message)
+//{
+//    std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // simulate work
+//    std::string modifiedMessage = message + " has been modified";
+//    prms.set_value(modifiedMessage);
+//}
+//
+//int main()
+//{
+//    // define message
+//    std::string messageToThread = "My Message";
+//
+//    // create promise and future
+//    std::promise<std::string> prms;
+//    std::future<std::string> ftr = prms.get_future();
+//
+//    // start thread and pass promise as argument
+//    std::thread t(modifyMessage, std::move(prms), messageToThread);
+//
+//    // print original message to console
+//    std::cout << "Original message from main(): " << messageToThread << std::endl;
+//
+//    // retrieve modified message via future and print to console
+//    std::string messageFromThread = ftr.get();
+//    std::cout << "Modified message from thread(): " << messageFromThread << std::endl;
+//
+//    // thread barrier
+//    t.join();
+//
+//    return 0;
+//}
+
+//
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//
+//void printHello()
+//{
+//    // perform work
+//    std::cout << "Hello from Worker thread #" << std::this_thread::get_id() << std::endl;
+//}
+//
+//int main()
+//{
+//    // create threads
+//    std::vector<std::thread> threads;
+//    for (size_t i = 0; i < 5; ++i)
+//    {
+//        // copying thread objects causes a compile error
+//        /*
+//        std::thread t(printHello);
+//        threads.push_back(t);
+//        */
+//
+//        // moving thread objects will work
+//        threads.emplace_back(std::thread(printHello));
+//    }
+//
+//    // do something in main()
+//    std::cout << "Hello from Main thread #" << std::this_thread::get_id() << std::endl;
+//
+//    // call join on all thread objects using a range-based loop
+//    for (auto &t : threads)
+//        t.join();
+//
+//    return 0;
+//}
 
 
 
