@@ -5,7 +5,7 @@
 #include "Graphics.h"
 #include "Intersection.h"
 
-void Graphics::simulate()
+[[noreturn]] void Graphics::simulate()
 {
     this->loadBackgroundImg();
     while (true)
