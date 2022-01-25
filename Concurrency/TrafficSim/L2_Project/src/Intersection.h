@@ -46,7 +46,7 @@ public:
 private:
 
     // typical behaviour methods
-    [[noreturn]] void processVehicleQueue();
+    [[noreturn]] [[noreturn]] void processVehicleQueue();
 
     // private members
     std::vector<std::shared_ptr<Street>> _streets;   // list of all streets connected to this intersection
