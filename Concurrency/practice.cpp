@@ -1,68 +1,506 @@
+#include <algorithm>
 #include <iostream>
 #include <thread>
 #include <vector>
 #include <future>
-#include <algorithm>
 #include <mutex>
+#include <deque>
 
 
-double result;
-std::mutex mutex_flag;
 
-void printResult(int denom)
+template <typename T>
+class MessageQueue
 {
-    mutex_flag.lock();
-    std::cout << "for denom = " << denom << ", the result is " << result << std::endl;
-    mutex_flag.unlock();
+public:
+    void send(T &&obj) {
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::unique_lock<std::mutex> u_lock(_mtx);
+        std::cout << "Message : " << obj << " added to the DQ ..." << std::endl;
+        _messages.emplace_back(std::move(obj));
+        _cond_var.notify_one();
+    }
 
-}
+    T receive(){
+//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::unique_lock<std::mutex> u_lock(_mtx);
+        _cond_var.wait(u_lock,[this](){return !_messages.empty();});
+        T obj = std::move(_messages.front());
+        _messages.pop_front();
+        std::cout << "Message : " << obj << " obtained from DQ" << std::endl;
+        return obj;
+    }
 
-void divideByNumber(double num, double denom)
-{
-    mutex_flag.lock();
+    bool checkMsgEmpty(){
+        std::unique_lock<std::mutex> u_lock(_mtx);
+        return _messages.empty();
+    }
 
-    try
-    {
-        // divide num by denom but throw an exception if division by zero is attempted
-        if (denom != 0)
-        {
-            result = num / denom;
+private:
+    std::deque<T> _messages;
+    std::mutex _mtx;
+    std::condition_variable _cond_var;
+};
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            printResult(denom);
+int main(){
+    auto mq = std::make_shared<MessageQueue<std::string>>();
+    std::cout << "Spawning threads..." << std::endl;
+    std::vector<std::future<void>> _futures;
+    for(size_t i=0; i<10 ; i++){
+        std::string str_obj{"MID - " + std::to_string(i)};
+        _futures.emplace_back(std::async(std::launch::async, &MessageQueue<std::string>::send, mq, std::move(str_obj) ));
+    }
 
+    for(auto &ftr: _futures) {
+        while ([&ftr]() {
+            auto status = ftr.wait_for(std::chrono::nanoseconds(1));
+            return status != std::future_status::ready;
+        }() || !mq->checkMsgEmpty()
+        ){
+            mq->receive();
         }
-        else
-        {
-            throw std::invalid_argument("Exception from thread: Division by zero!");
+    }
+
+    std::for_each(_futures.begin(), _futures.end(), [](std::future<void> &ftr) {
+        auto status = ftr.wait_for(std::chrono::nanoseconds(1));
+        if(status != std::future_status::ready){
+            std::cout << "Oops!!" <<std::endl;
         }
-    }
-    catch (const std::invalid_argument &e)
-    {
-        // notify the user about the exception and return
-        std::cout << e.what() << std::endl;
-        return;
-    }
-    mutex_flag.unlock();
-
-}
-
-int main()
-{
-    // create a number of threads which execute the function "divideByNumber" with varying parameters
-    std::vector<std::future<void>> futures;
-    for (double i = -5; i <= +5; ++i)
-    {
-        futures.emplace_back(std::async(std::launch::async, divideByNumber, 50.0, i));
-    }
-
-    // wait for the results
-    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
-        ftr.wait();
     });
 
+    std::cout << "Successfully Came out of Loop!" << std::endl;
     return 0;
 }
+
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <mutex>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//    int getID() { return _id; }
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() {}
+//
+//    Vehicle popBack()
+//    {
+//        // perform vector modification under the lock
+//        std::unique_lock<std::mutex> uLock(_mutex);
+//        _cond.wait(uLock, [this] (){ return !_vehicles.empty(); }); // pass unique lock to condition variable
+//
+//        // remove last vector element from queue
+//        Vehicle v = std::move(_vehicles.back());
+//        _vehicles.pop_back();
+//
+//        return v; // will not be copied due to return value optimization (RVO) in C++
+//    }
+//
+//    void pushBack(Vehicle &&v)
+//    {
+//        // simulate some work
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//
+//        // add vector to queue
+//        std::cout << "   Vehicle #" << v.getID() << " will be added to the queue" << std::endl;
+//        _vehicles.push_back(std::move(v));
+//        _cond.notify_one(); // notify client after pushing new Vehicle into vector
+//    }
+//
+//private:
+//    std::mutex _mutex;
+//    std::condition_variable _cond;
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//};
+//
+//int main()
+//{
+//    // create monitor object as a shared pointer to enable access by multiple threads
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//
+//    std::cout << "Spawning threads..." << std::endl;
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        // create a new Vehicle instance and move it into the queue
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, std::move(v)));
+//    }
+//
+//    std::cout << "Collecting results..." << std::endl;
+//    while (true)
+//    {
+//        // popBack wakes up when a new element is available in the queue
+//        Vehicle v = queue->popBack();
+//        std::cout << "   Vehicle #" << v.getID() << " has been removed from the queue" << std::endl;
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    std::cout << "Finished!" << std::endl;
+//
+//    return 0;
+//}
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <mutex>
+//#include <algorithm>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//    int getID() { return _id; }
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() : _numVehicles(0) {}
+//
+//    int getNumVehicles()
+//    {
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//        return _numVehicles;
+//    }
+//
+//    bool dataIsAvailable()
+//    {
+//        std::lock_guard<std::mutex> myLock(_mutex);
+//        return !_vehicles.empty();
+//    }
+//
+//    Vehicle popBack()
+//    {
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//
+//        // remove last vector element from queue
+//        Vehicle v = std::move(_vehicles.back());
+//        _vehicles.pop_back();
+//        --_numVehicles;
+//
+//        return v; // will not be copied due to return value optimization (RVO) in C++
+//    }
+//
+//    void pushBack(Vehicle &&v)
+//    {
+//        // simulate some work
+//
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//
+//        // add vector to queue
+//        std::cout << "   Vehicle #" << v.getID() << " will be added to the queue" << std::endl;
+//        _vehicles.emplace_back(std::move(v));
+//        ++_numVehicles;
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//
+//    }
+//
+//private:
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//    std::mutex _mutex;
+//    int _numVehicles;
+//};
+//
+//int main()
+//{
+//    // create monitor object as a shared pointer to enable access by multiple threads
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//
+//    std::cout << "Spawning threads..." << std::endl;
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        // create a new Vehicle instance and move it into the queue
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, std::move(v)));
+//    }
+//
+//    std::cout << "Collecting results..." << std::endl;
+//    while (true)
+//    {
+//        if (queue->dataIsAvailable())
+//        {
+//            Vehicle v = queue->popBack();
+//            std::cout << "   Vehicle #" << v.getID() << " has been removed from the queue" << std::endl;
+//
+//            if(queue->getNumVehicles()<=0)
+//            {
+//                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+//                break;
+//            }
+//        }
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    std::cout << "Finished : " << queue->getNumVehicles() << " vehicle(s) left in the queue" << std::endl;
+//
+//    return 0;
+//}
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <mutex>
+//#include <algorithm>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//    int getID() { return _id; }
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() {}
+//
+//    bool dataIsAvailable()
+//    {
+//        std::lock_guard<std::mutex> myLock(_mutex);
+//        return !_vehicles.empty();
+//    }
+//
+//    int vehicleCount(){
+//        std::unique_lock<std::mutex> lck(_mutex);
+//        return _vehicle_counter;
+//    }
+//
+//    Vehicle popBack()
+//    {
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//
+//        // remove last vector element from queue
+//        Vehicle v = std::move(_vehicles.back());
+//        _vehicles.pop_back();
+//        _vehicle_counter--;
+//        return v; // will not be copied due to return value optimization (RVO) in C++
+//    }
+//
+//    void pushBack(Vehicle &&v)
+//    {
+//        // simulate some work
+//
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//
+//        // add vector to queue
+//        std::cout << "   Vehicle #" << v.getID() << " will be added to the queue" << std::endl;
+//        _vehicles.emplace_back(std::move(v));
+//        _vehicle_counter++;
+//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//
+//    }
+//
+//private:
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//    std::mutex _mutex;
+//    int _vehicle_counter{0};
+//};
+//
+//int main()
+//{
+//    // create monitor object as a shared pointer to enable access by multiple threads
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//
+//    std::cout << "Spawning threads..." << std::endl;
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        // create a new Vehicle instance and move it into the queue
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, std::move(v)));
+//    }
+//
+//    std::cout << "Collecting results..." << std::endl;
+//    while (queue->vehicleCount()>0)
+//    {
+//        if (queue->dataIsAvailable())
+//        {
+//            Vehicle v = queue->popBack();
+//            std::cout << "   Vehicle #" << v.getID() << " has been removed from the queue" << std::endl;
+//        }
+//
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    std::cout << "Finished processing queue" << std::endl;
+//
+//    return 0;
+//}
+
+//
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <mutex>
+//#include <algorithm>
+//
+//class Vehicle
+//{
+//public:
+//    Vehicle(int id) : _id(id) {}
+//    int getID() { return _id; }
+//
+//private:
+//    int _id;
+//};
+//
+//class WaitingVehicles
+//{
+//public:
+//    WaitingVehicles() {}
+//
+//    void printIDs()
+//    {
+//        std::lock_guard<std::mutex> myLock(_mutex); // lock is released when myLock goes out of scope
+//        for(auto &v : _vehicles)
+//            std::cout << "   Vehicle #" << v.getID() << " is now waiting in the queue" << std::endl;
+//
+//    }
+//
+//    void pushBack(Vehicle &&v)
+//    {
+//        // perform vector modification under the lock
+//        std::lock_guard<std::mutex> uLock(_mutex);
+//        std::cout << "   Vehicle #" << v.getID() << " will be added to the queue" << std::endl;
+//        _vehicles.emplace_back(std::move(v));
+//
+//        // simulate some work
+//        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//    }
+//
+//private:
+//    std::vector<Vehicle> _vehicles; // list of all vehicles waiting to enter this intersection
+//    std::mutex _mutex;
+//};
+//
+//int main()
+//{
+//    // create monitor object as a shared pointer to enable access by multiple threads
+//    std::shared_ptr<WaitingVehicles> queue(new WaitingVehicles);
+//
+//    std::cout << "Spawning threads..." << std::endl;
+//    std::vector<std::future<void>> futures;
+//    for (int i = 0; i < 10; ++i)
+//    {
+//        // create a new Vehicle instance and move it into the queue
+//        Vehicle v(i);
+//        futures.emplace_back(std::async(std::launch::async, &WaitingVehicles::pushBack, queue, std::move(v)));
+//    }
+//
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    std::cout << "Collecting results..." << std::endl;
+//    queue->printIDs();
+//
+//    return 0;
+//}
+//
+
+//#include <iostream>
+//#include <thread>
+//#include <vector>
+//#include <future>
+//#include <algorithm>
+//#include <mutex>
+//
+//
+//double result;
+//std::mutex mutex_flag;
+//
+//void printResult(int denom)
+//{
+//    mutex_flag.lock();
+//    std::cout << "for denom = " << denom << ", the result is " << result << std::endl;
+//    mutex_flag.unlock();
+//
+//}
+//
+//void divideByNumber(double num, double denom)
+//{
+//    mutex_flag.lock();
+//
+//    try
+//    {
+//        // divide num by denom but throw an exception if division by zero is attempted
+//        if (denom != 0)
+//        {
+//            result = num / denom;
+//
+//            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//            printResult(denom);
+//
+//        }
+//        else
+//        {
+//            throw std::invalid_argument("Exception from thread: Division by zero!");
+//        }
+//    }
+//    catch (const std::invalid_argument &e)
+//    {
+//        // notify the user about the exception and return
+//        std::cout << e.what() << std::endl;
+//        return;
+//    }
+//    mutex_flag.unlock();
+//
+//}
+//
+//int main()
+//{
+//    // create a number of threads which execute the function "divideByNumber" with varying parameters
+//    std::vector<std::future<void>> futures;
+//    for (double i = -5; i <= +5; ++i)
+//    {
+//        futures.emplace_back(std::async(std::launch::async, divideByNumber, 50.0, i));
+//    }
+//
+//    // wait for the results
+//    std::for_each(futures.begin(), futures.end(), [](std::future<void> &ftr) {
+//        ftr.wait();
+//    });
+//
+//    return 0;
+//}
 
 //#include <iostream>
 //#include <thread>
