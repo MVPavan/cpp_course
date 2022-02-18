@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread")
 
 add_executable(
         Udacity
-        Concurrency/practice.cpp
+        Capstone/practice.cpp
 #        main.cpp
 )
 #target_link_libraries(Udacity LibsModule)
