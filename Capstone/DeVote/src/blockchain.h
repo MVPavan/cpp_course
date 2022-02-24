@@ -9,13 +9,15 @@
 
 class BlockChain{
 public:
-    BlockChain();
+    explicit BlockChain(uint32_t chain_difficulty=5);
     void addBlock(Block b_new);
 
 private:
     std::vector<Block> block_chain;
     uint32_t b_difficulty;
-    Block getLastBlock() const;
+    [[nodiscard]] std::string getLastBlockHash() const {
+        return block_chain[-1].getHash();
+    }
 
 };
 
