@@ -15,11 +15,11 @@ public:
     std::string prev_hash;
     Block(uint32_t b_idx, const std::string &b_data);
     [[nodiscard]] std::string getHash() const;
-    void mine(uint32_t b_difficulty);
+    void mineBlock(uint32_t b_difficulty);
 
 private:
     struct BlockParams b_params;
-    void updateBlock(BlockParams& b_params);
+    void updateBlock(BlockParams b_params);
 
 //    uint32_t b_Idx;
 //    std::string b_Data;
@@ -27,5 +27,7 @@ private:
 //    int64_t b_Nounce;
 //    time_t b_Time;
 };
+
+bool check_async_threads(const std::vector<std::future<void>>& _futures);
 
 #endif //DEVOTE_BLOCK_H

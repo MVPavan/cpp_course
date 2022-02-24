@@ -10,6 +10,6 @@ BlockChain::BlockChain(uint32_t chain_difficulty) : b_difficulty(chain_difficult
 
 void BlockChain::addBlock(Block b_new) {
     b_new.prev_hash = getLastBlockHash();
-    b_new.mine(b_difficulty);
+    b_new.mineBlock(b_difficulty);
     block_chain.emplace_back(std::move(b_new));
 }

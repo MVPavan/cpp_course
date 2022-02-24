@@ -25,6 +25,7 @@ struct BlockParams{
     int64_t b_Nounce;
     time_t b_Time;
     std::string prev_hash;
+    uint32_t b_difficulty;
 };
 
 #endif //DEVOTE_IMPORTS_H

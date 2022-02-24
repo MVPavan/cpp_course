@@ -5,7 +5,7 @@
 #include "blockchain.h"
 
 int main(){
-    BlockChain bChain = BlockChain(1);
+    BlockChain bChain = BlockChain(5);
 
     std::cout << "Mining block 1..." << std::endl;
     bChain.addBlock(Block(1, "Block 1 Data"));

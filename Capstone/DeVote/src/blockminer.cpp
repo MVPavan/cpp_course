@@ -5,6 +5,12 @@
 #include "blockminer.h"
 
 BlockMiner::BlockMiner(BlockParams& _b_params): b_params(_b_params) {
+    found_hash = false;
+    sub_str = difficulty_sub_str(b_params.b_difficulty);
+}
+
+bool BlockMiner::hash_found_flag() const {
+    return found_hash;
 }
 
 std::string BlockMiner::difficulty_sub_str(uint32_t b_difficulty){
@@ -23,7 +29,7 @@ inline std::string BlockMiner::calculateHash() const {
     return sha256(ss.str());
 }
 
-void BlockMiner::asyncMine(uint32_t b_difficulty, const std::string& sub_str) {
+void BlockMiner::asyncMine() {
     std::unique_lock<std::mutex> u_lock(_mtx);
     std::string t_hash;
     std::cout << "Thread ID" << std::this_thread::get_id();
@@ -36,7 +42,7 @@ void BlockMiner::asyncMine(uint32_t b_difficulty, const std::string& sub_str) {
         u_lock.unlock();
         t_hash = calculateHash();
     } while (
-            (t_hash.substr(0,b_difficulty) != sub_str) || (!found_hash)
+            (t_hash.substr(0,b_params.b_difficulty) != sub_str) || (!found_hash)
             );
     u_lock.lock();
     if(!found_hash){
@@ -45,46 +51,10 @@ void BlockMiner::asyncMine(uint32_t b_difficulty, const std::string& sub_str) {
     }
 }
 
-BlockParams BlockMiner::mineBlock(uint32_t b_difficulty) {
-    std::string sub_str = difficulty_sub_str(b_difficulty);
-    found_hash = false;
-    std::cout << "Spawning threads..." << std::endl;
-    auto shared_block = std::shared_ptr<BlockMiner>(shared_from_this());
-    std::vector<std::future<void>> _futures;
-//    asyncMine(b_difficulty, sub_str);
-//    auto out = std::async(std::launch::deferred, &Block::asyncMine, this, b_difficulty, sub_str);
-    for(size_t i=0; i<10 ; i++){
-        _futures.emplace_back(std::async(std::launch::deferred, &BlockMiner::asyncMine, this, b_difficulty, sub_str));
-    }
-
-    for(auto &ftr: _futures) {
-        while ([&ftr]() {
-            auto status = ftr.wait_for(std::chrono::nanoseconds(100));
-            return status != std::future_status::ready;
-        }() || found_hash
-                ){
-        }
-    }
-//    while(!found_hash){
-//        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//    }
-    if(!check_async_threads(_futures)){
-        std::exit(-1);
-    }
+BlockParams BlockMiner::get_params() const {
     return b_params;
 }
 
 
 
-bool check_async_threads(const std::vector<std::future<void>>& _futures) {
-    bool flag = true;
-    std::for_each(_futures.begin(), _futures.end(), [flag](const std::future<void> &ftr)mutable
-    {
-        auto status = ftr.wait_for(std::chrono::nanoseconds(1));
-        if(status != std::future_status::ready){
-            std::cout << "Async not completed!!" <<std::endl;
-            flag = false;
-        }
-    });
-    return flag;
-}
+
